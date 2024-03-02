@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace UndertaleModLib.Models;
 
@@ -1082,7 +1083,7 @@ public class UndertaleRoom : UndertaleNamedResource, INotifyPropertyChanged, IDi
         /// <remarks>
         /// This attribute is UMT-only and does not exist in GameMaker.
         /// </remarks>
-        internal uint? OriginalID = null;
+        public uint? OriginalID { get; set; } = null;
 
         /// <inheritdoc />
         public void Serialize(UndertaleWriter writer)
@@ -1128,7 +1129,17 @@ public class UndertaleRoom : UndertaleNamedResource, INotifyPropertyChanged, IDi
 
         public override string ToString()
         {
-            return "Instance " + InstanceID + " of " + (ObjectDefinition?.Name?.Content ?? "?");
+            StringBuilder sb = new("Instance ");
+            sb.Append(InstanceID);
+            if (OriginalID != null)
+            {
+                sb.Append(" (originally ");
+                sb.Append(OriginalID);
+                sb.Append(")");
+            }
+            sb.Append(" of ");
+            sb.Append(ObjectDefinition?.Name?.Content ?? "?");
+            return sb.ToString();
         }
 
         /// <inheritdoc/>

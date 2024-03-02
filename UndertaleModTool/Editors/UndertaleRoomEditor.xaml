@@ -9,6 +9,7 @@
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800" d:DataContext="{d:DesignInstance undertale:UndertaleRoom}" x:Name="RoomEditor">
     <UserControl.Resources>
+        <local:LayerGameObjectTextDisplay x:Key="LayerGameObjectTextDisplay"/>
         <local:GridConverter x:Key="GridConverter"/>
         <local:UndertaleCachedImageLoader x:Key="UndertaleCachedImageLoader"/>
         <local:ColorConverter x:Key="ColorConverter"/>
@@ -85,8 +86,9 @@
                     <DataTemplate DataType="{x:Type undertale:UndertaleRoom+GameObject}">
                         <TextBlock>
                             <TextBlock.Text>
-                                <MultiBinding Mode="OneWay" StringFormat="{}Instance {0} of {1}">
+                                <MultiBinding Converter="{StaticResource LayerGameObjectTextDisplay}">
                                     <Binding Path="InstanceID" Mode="OneWay"/>
+                                    <Binding Path="OriginalID" Mode="OneWay" FallbackValue=""/>
                                     <Binding Path="ObjectDefinition.Name.Content" Mode="OneWay" TargetNullValue="?" FallbackValue="EmptyInstance"/>
                                 </MultiBinding>
                             </TextBlock.Text>
