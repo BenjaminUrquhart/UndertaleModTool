@@ -408,8 +408,17 @@ public class UndertaleRoom : UndertaleNamedResource, INotifyPropertyChanged, IDi
                                 Debug.WriteLine($"The object instance with ID {id} of a layer (ID {layer.LayerId}) is not found.");
                                 continue;
                             }
-                            
-                            layer.InstancesData.Instances.Add(GameObjects[foundIndex + 1]);
+                            gameObj = GameObjects[foundIndex + 1];
+
+                            /* Preserve original null instance ID for serialization.
+                             * Needs to be done this way to avoid the setter
+                             * overwriting the original ID.
+                             */
+                            uint origID = gameObj.InstanceID;
+                            gameObj.InstanceID = id;
+                            gameObj.OriginalID = origID;
+
+                            layer.InstancesData.Instances.Add(gameObj);
                         }
                     }
                 }
@@ -923,6 +932,7 @@ public class UndertaleRoom : UndertaleNamedResource, INotifyPropertyChanged, IDi
         private UndertaleResourceById<UndertaleGameObject, UndertaleChunkOBJT> _objectDefinition = new();
         private UndertaleResourceById<UndertaleCode, UndertaleChunkCODE> _creationCode = new();
         private UndertaleResourceById<UndertaleCode, UndertaleChunkCODE> _preCreateCode = new();
+        private uint _instanceID;
 
         /// <summary>
         /// The x coordinate of this object.
@@ -942,7 +952,17 @@ public class UndertaleRoom : UndertaleNamedResource, INotifyPropertyChanged, IDi
         /// <summary>
         /// The instance id of this object.
         /// </summary>
-        public uint InstanceID { get; set; }
+        public uint InstanceID { 
+            get => _instanceID; 
+            set 
+            { 
+                if (_instanceID != value)
+                {
+                    _instanceID = value; 
+                    OriginalID = null;
+                }
+            } 
+        }
 
         /// <summary>
         /// The creation code for this object.
@@ -1056,13 +1076,21 @@ public class UndertaleRoom : UndertaleNamedResource, INotifyPropertyChanged, IDi
         /// </remarks>
         public int YOffset => Y + SpriteYOffset;
 
+        /// <summary>
+        /// Original instance ID if GM:S gave a duplicate ID, null otherwise.
+        /// </summary>
+        /// <remarks>
+        /// This attribute is UMT-only and does not exist in GameMaker.
+        /// </remarks>
+        internal uint? OriginalID = null;
+
         /// <inheritdoc />
         public void Serialize(UndertaleWriter writer)
         {
             writer.Write(X);
             writer.Write(Y);
             writer.WriteUndertaleObject(_objectDefinition);
-            writer.Write(InstanceID);
+            writer.Write(OriginalID ?? InstanceID);
             writer.WriteUndertaleObject(_creationCode);
             writer.Write(ScaleX);
             writer.Write(ScaleY);
@@ -1544,7 +1572,7 @@ public class UndertaleRoom : UndertaleNamedResource, INotifyPropertyChanged, IDi
             {
                 writer.Write((uint)Instances.Count);
                 foreach (var obj in Instances)
-                    writer.Write(obj.InstanceID);
+                    writer.Write(obj.InstanceID); // Intentionally not using OriginalID here
             }
 
             /// <inheritdoc />
